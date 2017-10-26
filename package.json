@@ -1,17 +1,22 @@
 {
-  "name": "fastify-blog",
+  "name": "fastify-learning",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
+    "start": "node app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "fastify": "^0.30.2"
+    "fastify": "^0.30.2",
+    "fastify-mongodb": "^0.1.0"
   },
   "devDependencies": {
+    "fastify-cli": "^0.10.0",
+    "mongodb": "^2.2.33",
+    "pino": "^4.8.0"
   }
 }

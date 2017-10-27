@@ -2,7 +2,7 @@
 * @Author: AlanWang
 * @Date:   2017-10-24 10:46:48
 * @Last Modified by:   AlanWang
-* @Last Modified time: 2017-10-27 15:56:15
+* @Last Modified time: 2017-10-27 16:00:43
 */
 
 'use strict'
@@ -104,6 +104,11 @@ function build(opts) {
       ])
     }, (request, reply) => {
       request.log.info('Auth route')
+      reply.send({ hello: 'world' })
+    })
+
+    fastify.get('/no-auth', {}, (request, reply) => {
+      request.log.info('Auth free route')
       reply.send({ hello: 'world' })
     })
   }

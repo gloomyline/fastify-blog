@@ -1,8 +1,8 @@
 /*
 * @Author: AlanWang
 * @Date:   2017-10-24 10:46:48
-* @Last Modified by:   AlanWang
-* @Last Modified time: 2017-10-27 16:00:43
+* @Last Modified by:   Alan
+* @Last Modified time: 2017-10-28 11:18:13
 */
 
 'use strict'
@@ -12,12 +12,14 @@ const Fastify = require('fastify')
 function build(opts) {
   const fastify = Fastify(opts)
 
-  fastify.register(require('fastify-jwt'), { secret: 'supersecret' })
+  fastify
+    // .register(require('fastify-jwt'), { secret: 'supersecret' })
+    .register(require('./plugins/jwt'), { secret: 'supersecret' })
     .register(require('fastify-mongodb'), { url: 'mongodb://localhost:27017/blog-system' })
     .register(require('fastify-auth'))
     .after(routes)
 
-  fastify.decorate('verifyJWTandMongo', (request, reply, done) => {
+  fastify.decorate('verifyJWTandMongo', async (request, reply, done) => {
     const jwt = fastify.jwt
     const mongo = fastify.mongo
     const token = request.req.headers['authorization']
@@ -25,27 +27,27 @@ function build(opts) {
       done(new Error('Missing token header'))
     }
 
-    jwt.verify(token, (err, decoded) => {
-      if (err || !decoded.user || !decoded.pwd) {
-        return done(new Error('Token invalid, jwt verificated is not passed'))
+    // jwt.verify(token, (err, decoded) => {
+    //   if (err || !decoded.user || !decoded.pwd) {
+    //     return done(new Error('Token invalid, jwt verificated is not passed'))
+    //   }
+    let decoded = await jwt.verify(token)
+    mongo.db.collection('users').findOne({ user: decoded.user }, { fields: { pwd: 1 } }, (err, data) => {
+      if (err) {
+        if (err.notFound) {
+          return done(new Error('Token invalid, does not have the user'))
+        }
+        return done(err)
       }
 
-      mongo.db.collection('users').findOne({ user: decoded.user }, { fields: { pwd: 1 } }, (err, data) => {
-        if (err) {
-          if (err.notFound) {
-            return done(new Error('Token invalid, does not have the user'))
-          }
-          return done(err)
-        }
+      if (!data.pwd || data.pwd !== decoded.pwd) {
+        return done(new Error('Token invalid, password is not correct'))
+      }
 
-        if (!data.pwd || data.pwd !== decoded.pwd) {
-          return done(new Error('Token invalid, password is not correct'))
-        }
-
-        request.log.info('User authorized')
-        done()
-      })
+      request.log.info('User authorized')
+      done()
     })
+    // })
   })
 
   fastify.decorate('verifyUserAndPwd', (request, reply, done) => {
@@ -82,18 +84,18 @@ function build(opts) {
       }
     }, (request, reply) => {
       request.log.info('Creating new user')
-      db.collection('users', (err, col) => { // on open collection user in db blog-system
+      db.collection('users', async (err, col) => { // on open collection user in db blog-system
         if (err) return reply.send(err)
+        let token = await fastify.jwt.sign(request.body)
 
-        fastify.jwt.sign(request.body, (err, token) => { // on generate token
+        // fastify.jwt.sign(request.body, (err, token) => { // on generate token
+        //   if (err) return reply.send(err)
+        col.insertOne({ user: request.body.user, pwd: request.body.pwd, token}, (err) => { // on insert
           if (err) return reply.send(err)
-
-          col.insertOne({ user: request.body.user, pwd: request.body.pwd, token}, (err) => { // on insert
-            if (err) return reply.send(err)
-            request.log.info('User created')
-            reply.send({ token })
-          })   
-        })
+          request.log.info('User created')
+          reply.send({ token })
+        })   
+        // })
       })
     })
 

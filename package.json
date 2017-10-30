@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "bluebird": "^3.5.1",
     "fastify": "^0.30.2",
     "fastify-auth": "^0.1.0",
     "fastify-jwt": "^0.1.1",

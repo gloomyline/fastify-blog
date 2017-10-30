@@ -3,3 +3,6 @@ node_modules/
 
 # level database
 authdb/
+
+# test files
+test/

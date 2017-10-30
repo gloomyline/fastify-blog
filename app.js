@@ -2,7 +2,7 @@
 * @Author: AlanWang
 * @Date:   2017-10-24 10:46:48
 * @Last Modified by:   Alan
-* @Last Modified time: 2017-10-30 14:16:09
+* @Last Modified time: 2017-10-30 17:45:15
 */
 
 'use strict'
@@ -13,12 +13,11 @@ function build(opts) {
   const fastify = Fastify(opts)
 
   fastify
-    // .register(require('fastify-jwt'), { secret: 'supersecret' })
     .register(require('./plugins/utils'))
     .register(require('./plugins/jwt'), { secret: 'supersecret' })
     .register(require('fastify-mongodb'), { url: 'mongodb://localhost:27017/blog-system' })
     .register(require('fastify-auth'))
-    .after(routes)
+    .register(require('./routes'))
 
   fastify.decorate('verifyJWTandMongo', async (request, reply, done) => {
     const jwt = fastify.jwt
@@ -28,10 +27,6 @@ function build(opts) {
       done(new Error('Missing token header'))
     }
 
-    // jwt.verify(token, (err, decoded) => {
-    //   if (err || !decoded.user || !decoded.pwd) {
-    //     return done(new Error('Token invalid, jwt verificated is not passed'))
-    //   }
     let decoded = await jwt.verify(token)
     mongo.db.collection('users').findOne({ user: decoded.user }, { fields: { pwd: 1 } }, (err, data) => {
       if (err) {
@@ -48,7 +43,6 @@ function build(opts) {
       request.log.info('User authorized')
       done()
     })
-    // })
   })
 
   fastify.decorate('verifyUserAndPwd', (request, reply, done) => {
@@ -68,53 +62,6 @@ function build(opts) {
       done()
     })
   })
-
-  function routes() {
-    const db = fastify.mongo.db
-
-    fastify.post('/register', {
-      schema: {
-        body: {
-          type: 'object',
-          properties: {
-            user: { type: 'string' },
-            pwd: { type: 'string' }
-          },
-          required: ['user', 'pwd']
-        }
-      }
-    }, (request, reply) => {
-      request.log.info('Creating new user')
-      db.collection('users', async (err, col) => { // on open collection user in db blog-system
-        if (err) return reply.send(err)
-        let token = await fastify.jwt.sign(request.body)
-
-        // fastify.jwt.sign(request.body, (err, token) => { // on generate token
-        //   if (err) return reply.send(err)
-        col.insertOne({ user: request.body.user, pwd: request.body.pwd, token}, (err) => { // on insert
-          if (err) return reply.send(err)
-          request.log.info('User created')
-          reply.send({ token })
-        })   
-        // })
-      })
-    })
-
-    fastify.get('/auth', {
-      beforeHandler: fastify.auth([
-        fastify.verifyJWTandMongo,
-        fastify.verifyUserAndPwd
-      ])
-    }, (request, reply) => {
-      request.log.info('Auth route')
-      reply.send({ hello: 'world' })
-    })
-
-    fastify.get('/no-auth', {}, (request, reply) => {
-      request.log.info('Auth free route')
-      reply.send({ hello: 'world' })
-    })
-  }
 
   return fastify
 }

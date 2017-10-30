@@ -2,7 +2,7 @@
 * @Author: AlanWang
 * @Date:   2017-10-24 10:46:48
 * @Last Modified by:   Alan
-* @Last Modified time: 2017-10-28 11:18:13
+* @Last Modified time: 2017-10-30 14:16:09
 */
 
 'use strict'
@@ -14,6 +14,7 @@ function build(opts) {
 
   fastify
     // .register(require('fastify-jwt'), { secret: 'supersecret' })
+    .register(require('./plugins/utils'))
     .register(require('./plugins/jwt'), { secret: 'supersecret' })
     .register(require('fastify-mongodb'), { url: 'mongodb://localhost:27017/blog-system' })
     .register(require('fastify-auth'))

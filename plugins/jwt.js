@@ -2,7 +2,7 @@
 * @Author: Alan
 * @Date:   2017-10-28 09:52:46
 * @Last Modified by:   Alan
-* @Last Modified time: 2017-10-28 11:21:07
+* @Last Modified time: 2017-10-30 14:35:48
 */
 
 /**
@@ -43,15 +43,8 @@ function aJWT (fastify, opts, next) {
     if (typeof cb === 'function') {
       JWT.sign(payload, secret, opts, cb)
     } else {
-      return new Promise((resolve, reject) => {
-        JWT.sign(payload, secret, opts, (err, token) => {
-          if (err) {
-            reject(err)
-          } else {
-            resolve(token)
-          }
-        })
-      })
+      let sign = fastify.utils.promisify(JWT.sign)
+      return sign(payload, secret, opts)
     }
   }
   
@@ -75,15 +68,8 @@ function aJWT (fastify, opts, next) {
     if (typeof cb === 'function') {
       JWT.verify(token, secret, opts, cb)
     } else {
-      return new Promise((resolve, reject) => {
-        JWT.verify(token, secret, opts, (err, decoded) => {
-          if (err) {
-            reject(err)
-          } else {
-            resolve(decoded)
-          }
-        })
-      })
+      let verify = fastify.utils.promisify(JWT.verify)
+      return verify(token, secret, opts)
     }
   }
   
@@ -109,4 +95,4 @@ function aJWT (fastify, opts, next) {
   next()
 }
 
-module.exports = fp(aJWT, '>=0.30.2')
+module.exports = fp(aJWT, require('./config').fv)

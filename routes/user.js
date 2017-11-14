@@ -2,7 +2,7 @@
 * @Author: AlanWang
 * @Date:   2017-10-30 17:47:07
 * @Last Modified by:   AlanWang
-* @Last Modified time: 2017-10-30 17:56:10
+* @Last Modified time: 2017-11-14 14:10:20
 */
 
 function userRoutes(opts, next) {
@@ -34,8 +34,8 @@ function userRoutes(opts, next) {
 
   this.get('/auth', {
     beforeHandler: this.auth([
-      this.verifyJWTandMongo,
-      this.verifyUserAndPwd
+      this.verify.jwt,
+      this.verify.uap
     ])
   }, (request, reply) => {
     request.log.info('Auth route')
